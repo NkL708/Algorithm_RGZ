@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 
 // L-граф = список рёбер
 // M-граф = матрица смежности
@@ -25,7 +26,7 @@ class Graph
 		int index;
 	public:
 		Vertex();
-		Vertex(std::string name, Data data);
+		Vertex(Name name, Data data);
 		std::string getName();
 		Data getData();
 		void setName(std::string name);
@@ -74,6 +75,9 @@ class Graph
 	};
 	GraphOrientation orientation;
 	PresentationForm form;
+	std::vector<std::vector<Vertex>> matrix;
+	int vCount = 0;
+	int eCount = 0;
 
 public:
 	// To do
@@ -95,7 +99,7 @@ public:
 	int K();
 	void toListGraph();
 	void toMatrixGraph();
-	void insertVertex();
+	void insertVertex(std::vector<Vertex*> arr);
 	void deleteVertex(/* v? */);
 	void insertEdge(Vertex* begin, Vertex* end);
 	void deleteEdge(Vertex* begin, Vertex* end);
@@ -129,7 +133,6 @@ inline Graph<Data, Name>::EdgeIterator Graph<Data, Name>::eEnd()
 template<typename Data, typename Name>
 Graph<Data, Name>::Graph()
 {
-
 }
 
 template<typename Data, typename Name>
@@ -159,13 +162,13 @@ Graph<Data, Name>::~Graph()
 template<typename Data, typename Name>
 inline int Graph<Data, Name>::getGraphVCount()
 {
-	return 0;
+	return vCount;
 }
 
 template<typename Data, typename Name>
 inline int Graph<Data, Name>::getGraphECount()
 {
-	return 0;
+	return eCount;
 }
 
 template<typename Data, typename Name>
@@ -193,9 +196,26 @@ inline void Graph<Data, Name>::toMatrixGraph()
 }
 
 template<typename Data, typename Name>
-inline void Graph<Data, Name>::insertVertex()
+inline void Graph<Data, Name>::insertVertex(std::vector<Vertex*> arr)
 {
+	if (form == mGraph)
+	{
+		if (vCount) 
+		{
+			for each (Vertex* obj in arr)
+			{
 
+			}
+		}
+		else
+		{
+			Vertex* vertex = new Vertex("1", 1);
+			std::vector<Vertex*> temp;
+			temp.insert(vertex);
+			matrix.insert(temp);
+		}
+	}
+	vCount++;
 }
 
 template<typename Data, typename Name>
@@ -229,7 +249,7 @@ inline Graph<Data, Name>::Vertex::Vertex()
 }
 
 template<typename Data, typename Name>
-inline Graph<Data, Name>::Vertex::Vertex(std::string name, Data data)
+inline Graph<Data, Name>::Vertex::Vertex(Name name, Data data)
 {
 	this->name = name;
 	this->data = data;
