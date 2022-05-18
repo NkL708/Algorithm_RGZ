@@ -1,11 +1,13 @@
 #pragma once
 #include <string>
+#include <vector>
 
 // L-граф = список рёбер
 // M-граф = матрица смежности
 template <typename Data, typename Name>
 class Graph
 {
+public:
 	enum GraphOrientation
 	{
 		oriented,
@@ -17,7 +19,7 @@ class Graph
 		lGraph,
 		mGraph
 	};
-	
+private:
 	class Vertex
 	{
 		Name name;
@@ -25,7 +27,7 @@ class Graph
 		int index;
 	public:
 		Vertex();
-		Vertex(std::string name, Data data);
+		Vertex(Name name, Data data);
 		std::string getName();
 		Data getData();
 		void setName(std::string name);
@@ -74,6 +76,9 @@ class Graph
 	};
 	GraphOrientation orientation;
 	PresentationForm form;
+	std::vector<std::vector<Vertex*>> matrix;
+	int vCount = 0;
+	int eCount = 0;
 
 public:
 	// To do
@@ -81,25 +86,29 @@ public:
 	EdgeIterator eEnd();
 	// Graph methods
 	Graph();
+	Graph(PresentationForm form);
+	// ?
 	Graph(int vertexCount, GraphOrientation orientation, PresentationForm form);
 	Graph(int vertexCount, int edgeCount, GraphOrientation orientation, PresentationForm form);
+	// ?
+	// to do
 	Graph(const Graph& obj);
+	// done
 	~Graph();
-	// To do
 	int getGraphVCount();
 	int getGraphECount();
-	// Done
 	GraphOrientation getGraphOrientation();
 	PresentationForm getGraphForm();
 	// To do
 	int K();
 	void toListGraph();
 	void toMatrixGraph();
-	void insertVertex();
-	void deleteVertex(/* v? */);
+	void insertVertex(std::vector<Data> vertexes);
+	void deleteVertex(Vertex* vertex);
 	void insertEdge(Vertex* begin, Vertex* end);
 	void deleteEdge(Vertex* begin, Vertex* end);
 	Edge getEdge(Vertex* begin, Vertex* end);
+	void printGraph();
 };
 
 template<typename Data, typename Name>
@@ -129,19 +138,29 @@ inline Graph<Data, Name>::EdgeIterator Graph<Data, Name>::eEnd()
 template<typename Data, typename Name>
 Graph<Data, Name>::Graph()
 {
-
 }
 
 template<typename Data, typename Name>
 Graph<Data, Name>::Graph(int vertexCount, GraphOrientation orientation, PresentationForm form)
 {
-
+	this->vCount = vertexCount;
+	this->orientation = orientation;
+	this->form = form;
 }
 
 template<typename Data, typename Name>
 Graph<Data, Name>::Graph(int vertexCount, int edgeCount, GraphOrientation orientation, PresentationForm form)
 {
+	this->vCount = vertexCount;
+	this->eCount = edgeCount;
+	this->orientation = orientation;
+	this->form = form;
+}
 
+template<typename Data, typename Name>
+Graph<Data, Name>::Graph(PresentationForm form)
+{
+	this->form = form;
 }
 
 template<typename Data, typename Name>
@@ -159,13 +178,13 @@ Graph<Data, Name>::~Graph()
 template<typename Data, typename Name>
 inline int Graph<Data, Name>::getGraphVCount()
 {
-	return 0;
+	return vCount;
 }
 
 template<typename Data, typename Name>
 inline int Graph<Data, Name>::getGraphECount()
 {
-	return 0;
+	return eCount;
 }
 
 template<typename Data, typename Name>
@@ -193,15 +212,43 @@ inline void Graph<Data, Name>::toMatrixGraph()
 }
 
 template<typename Data, typename Name>
-inline void Graph<Data, Name>::insertVertex()
+inline void Graph<Data, Name>::insertVertex(std::vector<Data> vertexes)
 {
+	if (form == mGraph)
+	{
+		if (vCount) 
+		{
+			Vertex* newVertex = new Vertex(std::to_string(vCount + 1), vCount + 1);
+			for (int i = 0; i < vCount; i++)
+			{
+				for (int j = 0; j < matrix.size(); j++)
+				{
+					if (matrix[j].at(0)->getData())
+					{
 
+					}
+				}
+			}
+		}
+		else
+		{
+			Vertex* vertex = new Vertex("0", 0);
+			// new row
+			std::vector<Vertex*> temp;
+			temp.insert(temp.begin(), vertex);
+			matrix.insert(matrix.begin(), temp);
+		}
+	}
+	//else 
+	//{
+	//
+	//}
+	vCount++;
 }
 
 template<typename Data, typename Name>
-inline void Graph<Data, Name>::deleteVertex()
+inline void Graph<Data, Name>::deleteVertex(Vertex* vertex)
 {
-
 }
 
 template<typename Data, typename Name>
@@ -219,7 +266,20 @@ inline void Graph<Data, Name>::deleteEdge(Vertex* begin, Vertex* end)
 template<typename Data, typename Name>
 inline Graph<Data, Name>::Edge Graph<Data, Name>::getEdge(Vertex* begin, Vertex* end)
 {
-	return Edge();
+	//return Edge();
+}
+
+template<typename Data, typename Name>
+inline void Graph<Data, Name>::printGraph()
+{
+	if (form = mGraph) 
+	{
+
+	}
+	else 
+	{
+
+	}
 }
 
 template<typename Data, typename Name>
@@ -229,7 +289,7 @@ inline Graph<Data, Name>::Vertex::Vertex()
 }
 
 template<typename Data, typename Name>
-inline Graph<Data, Name>::Vertex::Vertex(std::string name, Data data)
+inline Graph<Data, Name>::Vertex::Vertex(Name name, Data data)
 {
 	this->name = name;
 	this->data = data;
