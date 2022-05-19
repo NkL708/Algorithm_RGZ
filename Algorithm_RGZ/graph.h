@@ -1,20 +1,23 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <iomanip>
+#include <algorithm>
 
 // L-граф = список рёбер
 // M-граф = матрица смежности
+
 template <typename Data, typename Name>
 class Graph
 {
 public:
-	enum GraphOrientation
+	enum class GraphOrientation
 	{
 		oriented,
 		notOriented
 	};
 
-	enum PresentationForm
+	enum class GraphForm
 	{
 		lGraph,
 		mGraph
@@ -52,104 +55,87 @@ private:
 	};
 	class VertexIterator
 	{
+		Vertex* ptr;
 	public:
 		VertexIterator();
 		// To do
+		Data& operator*();
 		void operator++(int);
-		void operator--(int);
-		bool operator==(const VertexIterator& it);
-		bool operator!=(const VertexIterator& it);
 	};
-	// To do
 	VertexIterator vBegin();
 	VertexIterator vEnd();
+
 	class EdgeIterator
 	{
-
+		Edge* ptr;
 	public:
 		EdgeIterator();
 		// To do
+		Data& operator*();
 		void operator++(int);
-		void operator--(int);
-		bool operator==(const EdgeIterator& it);
-		bool operator!=(const EdgeIterator& it);
 	};
-	GraphOrientation orientation;
-	PresentationForm form;
-	std::vector<std::vector<Vertex*>> matrix;
+	EdgeIterator eBegin();
+	EdgeIterator eEnd();
+
+	// Types of graphs
+	GraphOrientation orientation = GraphOrientation::notOriented;
+	GraphForm form = GraphForm::lGraph;
+	// For M-graph
+	std::vector<Vertex*> graphVertexes;
+	std::vector<std::vector<int>> matrix;
+	std::vector<Data> graphVNums;
+	// For L-graph
+	std::vector<Edge*> graphEdges;
 	int vCount = 0;
 	int eCount = 0;
 
 public:
-	// To do
-	EdgeIterator eBegin();
-	EdgeIterator eEnd();
-	// Graph methods
+	// Constructors
 	Graph();
-	Graph(PresentationForm form);
-	// ?
-	Graph(int vertexCount, GraphOrientation orientation, PresentationForm form);
-	Graph(int vertexCount, int edgeCount, GraphOrientation orientation, PresentationForm form);
-	// ?
-	// to do
+	Graph(GraphForm form);
+	Graph(int vertexCount, GraphOrientation orientation, GraphForm form);
+	Graph(int vertexCount, int edgeCount, GraphOrientation orientation, GraphForm form);
 	Graph(const Graph& obj);
-	// done
 	~Graph();
+	
+	GraphOrientation getGraphOrientation();
+	GraphForm getGraphForm();
+	// Statistic
 	int getGraphVCount();
 	int getGraphECount();
-	GraphOrientation getGraphOrientation();
-	PresentationForm getGraphForm();
-	// To do
-	int K();
+	double countSaturation();
+	// Basic methods
 	void toListGraph();
 	void toMatrixGraph();
-	void insertVertex(std::vector<Data> vertexes);
-	void deleteVertex(Vertex* vertex);
-	void insertEdge(Vertex* begin, Vertex* end);
-	void deleteEdge(Vertex* begin, Vertex* end);
-	Edge getEdge(Vertex* begin, Vertex* end);
+	void insertVertex(std::vector<Data> vEdges);
+	void deleteVertex(Data vertex);
+	void insertEdge(Data begin, Data end);
+	void deleteEdge(Data begin, Data end);
+	Edge* getEdge(Data begin, Data end);
+	Vertex* getVertex(Data vertex);
 	void printGraph();
+	void clear();
 };
-
-template<typename Data, typename Name>
-inline Graph<Data, Name>::VertexIterator Graph<Data, Name>::vBegin()
-{
-	return VertexIterator();
-}
-
-template<typename Data, typename Name>
-inline Graph<Data, Name>::VertexIterator Graph<Data, Name>::vEnd()
-{
-	return VertexIterator();
-}
-
-template<typename Data, typename Name>
-inline Graph<Data, Name>::EdgeIterator Graph<Data, Name>::eBegin()
-{
-	return EdgeIterator();
-}
-
-template<typename Data, typename Name>
-inline Graph<Data, Name>::EdgeIterator Graph<Data, Name>::eEnd()
-{
-	return EdgeIterator();
-}
 
 template<typename Data, typename Name>
 Graph<Data, Name>::Graph()
 {
+	form = GraphForm::lGraph;
 }
 
 template<typename Data, typename Name>
-Graph<Data, Name>::Graph(int vertexCount, GraphOrientation orientation, PresentationForm form)
+Graph<Data, Name>::Graph(int vertexCount, GraphOrientation orientation, GraphForm form)
 {
-	this->vCount = vertexCount;
 	this->orientation = orientation;
 	this->form = form;
+	for (int i = 0; i < vertexCount; i++)
+	{
+		this->insertVertex(std::vector<Data> {});
+	}
 }
 
 template<typename Data, typename Name>
-Graph<Data, Name>::Graph(int vertexCount, int edgeCount, GraphOrientation orientation, PresentationForm form)
+Graph<Data, Name>::Graph(int vertexCount, int edgeCount, GraphOrientation orientation, GraphForm form)
 {
 	this->vCount = vertexCount;
 	this->eCount = edgeCount;
@@ -158,7 +144,7 @@ Graph<Data, Name>::Graph(int vertexCount, int edgeCount, GraphOrientation orient
 }
 
 template<typename Data, typename Name>
-Graph<Data, Name>::Graph(PresentationForm form)
+Graph<Data, Name>::Graph(GraphForm form)
 {
 	this->form = form;
 }
@@ -194,9 +180,15 @@ inline Graph<Data, Name>::GraphOrientation Graph<Data, Name>::getGraphOrientatio
 }
 
 template<typename Data, typename Name>
-inline Graph<Data, Name>::PresentationForm Graph<Data, Name>::getGraphForm()
+inline Graph<Data, Name>::GraphForm Graph<Data, Name>::getGraphForm()
 {
 	return form;
+}
+
+template<typename Data, typename Name>
+inline double Graph<Data, Name>::countSaturation()
+{
+	return eCount / (double) vCount;
 }
 
 template<typename Data, typename Name>
@@ -212,74 +204,224 @@ inline void Graph<Data, Name>::toMatrixGraph()
 }
 
 template<typename Data, typename Name>
-inline void Graph<Data, Name>::insertVertex(std::vector<Data> vertexes)
+inline void Graph<Data, Name>::insertVertex(std::vector<Data> vEdges)
 {
-	if (form == mGraph)
+	// generating unique graphVNum
+	int vertexNum = 0;
+	if (graphVNums.size()) 
 	{
-		if (vCount) 
+		int maxVnum = *std::max_element(graphVNums.begin(), graphVNums.end());
+		for (int i = 0; i <= maxVnum + 1; i++)
 		{
-			Vertex* newVertex = new Vertex(std::to_string(vCount + 1), vCount + 1);
-			for (int i = 0; i < vCount; i++)
+			if (std::find(graphVNums.begin(), graphVNums.end(), i) == graphVNums.end())
 			{
-				for (int j = 0; j < matrix.size(); j++)
-				{
-					if (matrix[j].at(0)->getData())
-					{
-
-					}
-				}
+				vertexNum = i;
+				break;
 			}
 		}
+	}
+	Vertex* newVertex = new Vertex(std::to_string(vertexNum), vertexNum);
+	graphVertexes.insert(graphVertexes.end(), newVertex);
+	graphVNums.insert(graphVNums.end(), vertexNum);
+	if (form == GraphForm::mGraph)
+	{
+		std::vector<int> newRow;
+		if (vCount > 0) 
+		{
+			// appending to rows
+			for (int i = 0; i < graphVNums.size() - 1; i++)
+			{
+				if (std::find(vEdges.begin(), vEdges.end(), graphVNums[i]) != vEdges.end())
+					matrix[i].insert(matrix[i].end(), 1);
+				else 
+					matrix[i].insert(matrix[i].end(), 0);
+			}
+			// new row
+			matrix.insert(matrix.end(), newRow);
+			// last row
+			int rowI = vCount;
+			for (int i = 0; i < graphVNums.size(); i++)
+			{
+				if (std::find(vEdges.begin(), vEdges.end(), graphVNums[i]) != vEdges.end())
+					matrix[rowI].insert(matrix[rowI].end(), 1);
+				else
+					matrix[rowI].insert(matrix[rowI].end(), 0);
+			}
+		}
+		// empty matrix
 		else
 		{
-			Vertex* vertex = new Vertex("0", 0);
-			// new row
-			std::vector<Vertex*> temp;
-			temp.insert(temp.begin(), vertex);
-			matrix.insert(matrix.begin(), temp);
+			newRow.insert(newRow.begin(), 0);
+			matrix.insert(matrix.begin(), newRow);
 		}
-	}
-	//else 
-	//{
-	//
-	//}
-	vCount++;
-}
-
-template<typename Data, typename Name>
-inline void Graph<Data, Name>::deleteVertex(Vertex* vertex)
-{
-}
-
-template<typename Data, typename Name>
-inline void Graph<Data, Name>::insertEdge(Vertex* begin, Vertex* end)
-{
-
-}
-
-template<typename Data, typename Name>
-inline void Graph<Data, Name>::deleteEdge(Vertex* begin, Vertex* end)
-{
-
-}
-
-template<typename Data, typename Name>
-inline Graph<Data, Name>::Edge Graph<Data, Name>::getEdge(Vertex* begin, Vertex* end)
-{
-	//return Edge();
-}
-
-template<typename Data, typename Name>
-inline void Graph<Data, Name>::printGraph()
-{
-	if (form = mGraph) 
-	{
-
 	}
 	else 
 	{
 
 	}
+	eCount += vEdges.size();
+	vCount++;
+}
+
+template<typename Data, typename Name>
+inline void Graph<Data, Name>::deleteVertex(Data vertex)
+{
+	if (form == GraphForm::mGraph)
+	{
+		// deleting row
+		for (int i = 0; i < matrix.size(); i++)
+		{
+			if (graphVNums[i] == vertex) 
+			{
+				matrix.erase(matrix.begin() + i);
+				break;
+			}
+		}
+		// deleting columns from rows
+		for (int i = 0; i < matrix.size(); i++)
+		{
+			for (int j = 0; j < matrix[i].size(); j++)
+			{
+				if (graphVNums[j] == vertex)
+				{
+					matrix[i].erase(matrix[i].begin() + j);
+					eCount--;
+					break;
+				}
+			}
+		}
+	}
+	else
+	{
+
+	}
+	// delete vertex from graphVertexes
+	for (int i = 0; i < graphVertexes.size(); i++)
+	{
+		if (graphVertexes[i]->getData() == vertex)
+			graphVertexes.erase(graphVertexes.begin() + i);
+	}
+	graphVNums.erase(std::find(graphVNums.begin(), graphVNums.end(), vertex));
+	vCount--;
+}
+
+template<typename Data, typename Name>
+inline void Graph<Data, Name>::insertEdge(Data begin, Data end)
+{
+	if (form == GraphForm::mGraph)
+	{
+		// add edge to row and column
+		for (int i = 0; i < matrix.size(); i++)
+		{
+			for (int j = 0; j < matrix[i].size(); j++)
+			{
+				if ((graphVNums[i] == begin && graphVNums[j] == end) ||
+					(graphVNums[i] == end && graphVNums[j] == begin))
+				{
+					matrix[i][j] = 1;
+				}
+			}
+		}
+	}
+	else
+	{
+
+	}
+	eCount++;
+}
+
+template<typename Data, typename Name>
+inline void Graph<Data, Name>::deleteEdge(Data begin, Data end)
+{
+	if (form == GraphForm::mGraph)
+	{
+		// add edge to row and column
+		for (int i = 0; i < matrix.size(); i++)
+		{
+			for (int j = 0; j < matrix[i].size(); j++)
+			{
+				if ((graphVNums[i] == begin && graphVNums[j] == end) ||
+					(graphVNums[i] == end && graphVNums[j] == begin))
+				{
+					matrix[i][j] = 0;
+				}
+			}
+		}
+	}
+	else
+	{
+
+	}
+	eCount--;
+}
+
+template<typename Data, typename Name>
+inline Graph<Data, Name>::Edge* Graph<Data, Name>::getEdge(Data begin, Data end)
+{
+	// Для M графа нет реализации
+}
+
+template<typename Data, typename Name>
+inline Graph<Data, Name>::Vertex* Graph<Data, Name>::getVertex(Data vertex)
+{
+	Vertex* result = nullptr;
+	for (int i = 0; i < graphVertexes.size(); i++)
+	{
+		if (graphVertexes[i]->getData() == vertex)
+			result = graphVertexes[i];
+	}
+	return result;
+}
+
+template<typename Data, typename Name>
+inline void Graph<Data, Name>::printGraph()
+{
+	if (form == GraphForm::mGraph)
+	{
+		if (!vCount) 
+		{
+			std::cout << "Граф пуст!\n";
+			return;
+		}
+		std::cout << "\nТаблица графа:\n" << std::setw(5);
+		// Vertexes numbers
+		for (int i = 0; i < matrix[0].size(); i++)
+		{
+			std::cout << graphVNums[i] << " ";
+		}
+		std::cout << "\n" << std::setw(5);
+		for (int i = 0; i < matrix[0].size(); i++)
+		{
+			std::cout << "--";
+		}
+		// matrix print
+		for (int i = 0; i < matrix.size(); i++)
+		{
+			std::cout << "\n" << graphVNums[i] << " | ";
+			for (int j = 0; j < matrix[i].size(); j++)
+			{
+				std::cout << matrix[i][j] << " ";
+			}
+		}
+		std::cout << std::endl;
+	}
+	else 
+	{
+		//
+	}
+}
+
+template<typename Data, typename Name>
+inline void Graph<Data, Name>::clear()
+{
+	for (int i = 0; i < matrix.size(); i++)
+	{
+		matrix[i].clear();
+	}
+	matrix.clear();
+	graphVNums.clear();
+	vCount = 0;
+	eCount = 0;
 }
 
 template<typename Data, typename Name>
@@ -309,7 +451,7 @@ inline void Graph<Data, Name>::Vertex::setName(std::string name)
 
 template<typename Data, typename Name>
 inline Data Graph<Data, Name>::Vertex::getData()
-{
+{	
 	return data;
 }
 
@@ -386,27 +528,15 @@ inline Graph<Data, Name>::VertexIterator::VertexIterator()
 }
 
 template<typename Data, typename Name>
+inline Data& Graph<Data, Name>::VertexIterator::operator*()
+{
+	return ptr->getData();
+}
+
+template<typename Data, typename Name>
 inline void Graph<Data, Name>::VertexIterator::operator++(int)
 {
 
-}
-
-template<typename Data, typename Name>
-inline void Graph<Data, Name>::VertexIterator::operator--(int)
-{
-
-}
-
-template<typename Data, typename Name>
-inline bool Graph<Data, Name>::VertexIterator::operator==(const VertexIterator& it)
-{
-	return false;
-}
-
-template<typename Data, typename Name>
-inline bool Graph<Data, Name>::VertexIterator::operator!=(const VertexIterator& it)
-{
-	return false;
 }
 
 template<typename Data, typename Name>
@@ -416,25 +546,37 @@ inline Graph<Data, Name>::EdgeIterator::EdgeIterator()
 }
 
 template<typename Data, typename Name>
+inline Data& Graph<Data, Name>::EdgeIterator::operator*()
+{
+	return ptr->getData();
+}
+
+template<typename Data, typename Name>
 inline void Graph<Data, Name>::EdgeIterator::operator++(int)
 {
 
 }
 
 template<typename Data, typename Name>
-inline void Graph<Data, Name>::EdgeIterator::operator--(int)
+inline Graph<Data, Name>::VertexIterator Graph<Data, Name>::vBegin()
 {
-
+	return VertexIterator();
 }
 
 template<typename Data, typename Name>
-inline bool Graph<Data, Name>::EdgeIterator::operator==(const EdgeIterator& it)
+inline Graph<Data, Name>::VertexIterator Graph<Data, Name>::vEnd()
 {
-	return false;
+	return VertexIterator();
 }
 
 template<typename Data, typename Name>
-inline bool Graph<Data, Name>::EdgeIterator::operator!=(const EdgeIterator& it)
+inline Graph<Data, Name>::EdgeIterator Graph<Data, Name>::eBegin()
 {
-	return false;
+	return EdgeIterator();
+}
+
+template<typename Data, typename Name>
+inline Graph<Data, Name>::EdgeIterator Graph<Data, Name>::eEnd()
+{
+	return EdgeIterator();
 }
