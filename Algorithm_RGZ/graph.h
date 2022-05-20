@@ -81,11 +81,11 @@ private:
 	GraphOrientation orientation = GraphOrientation::notOriented;
 	GraphForm form = GraphForm::lGraph;
 	// For M-graph
-	std::vector<Vertex*> graphVertexes;
+	std::vector<Vertex*> vList;
 	std::vector<std::vector<int>> matrix;
-	std::vector<Data> graphVNums;
+	std::vector<Data> vNumList;
 	// For L-graph
-	std::vector<Edge*> graphEdges;
+	std::vector<Edge*> eList;
 	int vCount = 0;
 	int eCount = 0;
 
@@ -208,12 +208,12 @@ inline void Graph<Data, Name>::insertVertex(std::vector<Data> vEdges)
 {
 	// generating unique graphVNum
 	int vertexNum = 0;
-	if (graphVNums.size()) 
+	if (vNumList.size()) 
 	{
-		int maxVnum = *std::max_element(graphVNums.begin(), graphVNums.end());
+		int maxVnum = *std::max_element(vNumList.begin(), vNumList.end());
 		for (int i = 0; i <= maxVnum + 1; i++)
 		{
-			if (std::find(graphVNums.begin(), graphVNums.end(), i) == graphVNums.end())
+			if (std::find(vNumList.begin(), vNumList.end(), i) == vNumList.end())
 			{
 				vertexNum = i;
 				break;
@@ -221,28 +221,27 @@ inline void Graph<Data, Name>::insertVertex(std::vector<Data> vEdges)
 		}
 	}
 	Vertex* newVertex = new Vertex(std::to_string(vertexNum), vertexNum);
-	graphVertexes.insert(graphVertexes.end(), newVertex);
-	graphVNums.insert(graphVNums.end(), vertexNum);
+	vList.insert(vList.end(), newVertex);
+	vNumList.insert(vNumList.end(), vertexNum);
 	if (form == GraphForm::mGraph)
 	{
 		std::vector<int> newRow;
 		if (vCount > 0) 
 		{
 			// appending to rows
-			for (int i = 0; i < graphVNums.size() - 1; i++)
+			for (int i = 0; i < vNumList.size() - 1; i++)
 			{
-				if (std::find(vEdges.begin(), vEdges.end(), graphVNums[i]) != vEdges.end())
+				if (std::find(vEdges.begin(), vEdges.end(), vNumList[i]) != vEdges.end())
 					matrix[i].insert(matrix[i].end(), 1);
 				else 
 					matrix[i].insert(matrix[i].end(), 0);
 			}
 			// new row
 			matrix.insert(matrix.end(), newRow);
-			// last row
 			int rowI = vCount;
-			for (int i = 0; i < graphVNums.size(); i++)
+			for (int i = 0; i < vNumList.size(); i++)
 			{
-				if (std::find(vEdges.begin(), vEdges.end(), graphVNums[i]) != vEdges.end())
+				if (std::find(vEdges.begin(), vEdges.end(), vNumList[i]) != vEdges.end())
 					matrix[rowI].insert(matrix[rowI].end(), 1);
 				else
 					matrix[rowI].insert(matrix[rowI].end(), 0);
@@ -257,7 +256,20 @@ inline void Graph<Data, Name>::insertVertex(std::vector<Data> vEdges)
 	}
 	else 
 	{
-
+		if (vCount > 0) 
+		{
+			for (int i = 0; i < vEdges.size(); i++)
+			{
+				Vertex* end = nullptr;
+				for (int j = 0; j < vList.size(); j++)
+				{
+					if (vList[j]->getData() == vEdges[i])
+						end = vList[j];
+				}
+				Edge* newEdge = new Edge(newVertex, end);
+				eList.insert(eList.end(), newEdge);
+			}
+		}
 	}
 	eCount += vEdges.size();
 	vCount++;
@@ -271,7 +283,7 @@ inline void Graph<Data, Name>::deleteVertex(Data vertex)
 		// deleting row
 		for (int i = 0; i < matrix.size(); i++)
 		{
-			if (graphVNums[i] == vertex) 
+			if (vNumList[i] == vertex) 
 			{
 				matrix.erase(matrix.begin() + i);
 				break;
@@ -282,7 +294,7 @@ inline void Graph<Data, Name>::deleteVertex(Data vertex)
 		{
 			for (int j = 0; j < matrix[i].size(); j++)
 			{
-				if (graphVNums[j] == vertex)
+				if (vNumList[j] == vertex)
 				{
 					matrix[i].erase(matrix[i].begin() + j);
 					eCount--;
@@ -296,12 +308,12 @@ inline void Graph<Data, Name>::deleteVertex(Data vertex)
 
 	}
 	// delete vertex from graphVertexes
-	for (int i = 0; i < graphVertexes.size(); i++)
+	for (int i = 0; i < vList.size(); i++)
 	{
-		if (graphVertexes[i]->getData() == vertex)
-			graphVertexes.erase(graphVertexes.begin() + i);
+		if (vList[i]->getData() == vertex)
+			vList.erase(vList.begin() + i);
 	}
-	graphVNums.erase(std::find(graphVNums.begin(), graphVNums.end(), vertex));
+	vNumList.erase(std::find(vNumList.begin(), vNumList.end(), vertex));
 	vCount--;
 }
 
@@ -315,8 +327,8 @@ inline void Graph<Data, Name>::insertEdge(Data begin, Data end)
 		{
 			for (int j = 0; j < matrix[i].size(); j++)
 			{
-				if ((graphVNums[i] == begin && graphVNums[j] == end) ||
-					(graphVNums[i] == end && graphVNums[j] == begin))
+				if ((vNumList[i] == begin && vNumList[j] == end) ||
+					(vNumList[i] == end && vNumList[j] == begin))
 				{
 					matrix[i][j] = 1;
 				}
@@ -340,8 +352,8 @@ inline void Graph<Data, Name>::deleteEdge(Data begin, Data end)
 		{
 			for (int j = 0; j < matrix[i].size(); j++)
 			{
-				if ((graphVNums[i] == begin && graphVNums[j] == end) ||
-					(graphVNums[i] == end && graphVNums[j] == begin))
+				if ((vNumList[i] == begin && vNumList[j] == end) ||
+					(vNumList[i] == end && vNumList[j] == begin))
 				{
 					matrix[i][j] = 0;
 				}
@@ -365,10 +377,10 @@ template<typename Data, typename Name>
 inline Graph<Data, Name>::Vertex* Graph<Data, Name>::getVertex(Data vertex)
 {
 	Vertex* result = nullptr;
-	for (int i = 0; i < graphVertexes.size(); i++)
+	for (int i = 0; i < vList.size(); i++)
 	{
-		if (graphVertexes[i]->getData() == vertex)
-			result = graphVertexes[i];
+		if (vList[i]->getData() == vertex)
+			result = vList[i];
 	}
 	return result;
 }
@@ -380,14 +392,14 @@ inline void Graph<Data, Name>::printGraph()
 	{
 		if (!vCount) 
 		{
-			std::cout << "Граф пуст!\n";
+			std::cout << "Матрица смежности пуста!\n";
 			return;
 		}
-		std::cout << "\nТаблица графа:\n" << std::setw(5);
+		std::cout << "\nМатрица смежности:\n" << std::setw(5);
 		// Vertexes numbers
-		for (int i = 0; i < matrix[0].size(); i++)
+		for (int i = 0; i < vNumList.size(); i++)
 		{
-			std::cout << graphVNums[i] << " ";
+			std::cout << vNumList[i] << " ";
 		}
 		std::cout << "\n" << std::setw(5);
 		for (int i = 0; i < matrix[0].size(); i++)
@@ -397,7 +409,7 @@ inline void Graph<Data, Name>::printGraph()
 		// matrix print
 		for (int i = 0; i < matrix.size(); i++)
 		{
-			std::cout << "\n" << graphVNums[i] << " | ";
+			std::cout << "\n" << vNumList[i] << " | ";
 			for (int j = 0; j < matrix[i].size(); j++)
 			{
 				std::cout << matrix[i][j] << " ";
@@ -407,7 +419,29 @@ inline void Graph<Data, Name>::printGraph()
 	}
 	else 
 	{
-		//
+		if (!eCount)
+		{
+			std::cout << "Список смежности пуст!\n";
+			return;
+		}
+		std::cout << "\nСписок смежности:\n" << std::setw(5);
+		// Vertexes numbers
+		for (int i = 0; i < eList.size(); i++)
+		{
+			std::cout << vNumList[i] << " ";
+		}
+		std::cout << "\n" << std::setw(5);
+		for (int i = 0; i < vNumList.size(); i++)
+		{
+			std::cout << "--";
+		}
+		// matrix print
+		for (int i = 0; i < eList.size(); i++)
+		{
+			std::cout << "\n" << i << " | ";
+			std::cout << eList[i]->getBegin()->getData() << " " << eList[i]->getEnd()->getData();
+		}
+		std::cout << std::endl;
 	}
 }
 
@@ -419,7 +453,7 @@ inline void Graph<Data, Name>::clear()
 		matrix[i].clear();
 	}
 	matrix.clear();
-	graphVNums.clear();
+	vNumList.clear();
 	vCount = 0;
 	eCount = 0;
 }

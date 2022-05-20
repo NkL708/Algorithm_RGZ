@@ -4,7 +4,7 @@
 int main()
 {
 	setlocale(LC_ALL, "Russian");
-	Graph<int, std::string> graph(Graph<int, std::string>::GraphForm::mGraph);
+	Graph<int, std::string> graph(Graph<int, std::string>::GraphForm::lGraph);
 	std::vector<int> v;
 	int begin, end;
 	int value;
@@ -58,10 +58,10 @@ int main()
 		"\t0. Вернуться обратно\n\n"
 	};
 
-	graph.insertVertex(std::vector<int> { });
-	graph.insertVertex(std::vector<int> {0});
-	graph.insertVertex(std::vector<int> {1});
-	graph.insertVertex(std::vector<int> {0, 1, 2});
+	//graph.insertVertex(std::vector<int> { });
+	//graph.insertVertex(std::vector<int> {0});
+	//graph.insertVertex(std::vector<int> {1});
+	//graph.insertVertex(std::vector<int> {0, 1, 2});
 
 	while (!exit)
 	{
