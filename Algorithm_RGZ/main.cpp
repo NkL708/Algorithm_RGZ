@@ -1,15 +1,28 @@
-#include <iostream>
 #include "graph.h"
 
 int main()
 {
 	setlocale(LC_ALL, "Russian");
-	Graph<int, std::string> graph(Graph<int, std::string>::GraphForm::lGraph);
+	Graph<int, std::string> graph(Graph<int, std::string>::GraphForm::matrixGraph);
+	Graph<int, std::string>::EdgeIterator edgeIterator;
+	Graph<int, std::string>::VertexIterator vertexIterator;
 	std::vector<int> v;
+	int dir;
 	int begin, end;
 	int value;
 	int sw = 0;
 	bool exit = false;
+
+	// Debug
+	graph.insertVertex(std::vector<int> { });
+	graph.insertVertex(std::vector<int> {0});
+	graph.insertVertex(std::vector<int> {1});
+	graph.insertVertex(std::vector<int> {0, 1, 2});
+
+	//graph.insertVertex(std::vector<int> { });
+	//graph.insertVertex(std::vector<int> { });
+	//graph.insertVertex(std::vector<int> { });
+	//graph.insertVertex(std::vector<int> { });
 
 	std::string menu[] =
 	{
@@ -21,16 +34,19 @@ int main()
 		"\t5. Удалить ребро\n",
 		"\t6. Очистить граф\n",
 		"\t7. Меню статистики\n",
-		"\t8. Меню конструкторов\n",
-		"\t9. Меню конструкторов\n",
-		"\t10. Меню конструкторов\n",
+		"\t8. Меню преобразований\n",
+		"\t9. Меню итератора рёбер\n",
+		"\t10. Меню итератора вершин\n",
+		"\t11. Меню дополнительных операций\n",
 		"\t0. Выход из программы\n\n"
 	};
 
 	std::string constructorMenu[]
 	{
 		"\n\t1. Создать граф без рёбер\n",
-		"\t2. Создать граф со случайными рёбрами\n",
+		"\t2. Преобразовать матрицу в список рёбер\n",
+		"\t3. Преобразовать список рёбер в матрицу\n",
+		"\t4. Создать граф со случайными рёбрами\n",
 		"\t0. Вернуться обратно\n\n"
 	};
 
@@ -40,28 +56,32 @@ int main()
 		"\t2. Вывести количество рёбер\n",
 		"\t3. Вывести коэффициент насыщенности графа\n",
 		"\t4. Форма представления графа\n",
-		"\t5. Ориентация графа\n",
 		"\t0. Вернуться обратно\n\n"
 	};
 
-	std::string iteratorMenu[]
+	std::string eIteratorMenu[]
 	{
-		"\n\t1. Создать итератор\n",
-		"\n\t2. Выполнить iterator++\n",
+		"\n\t1. Установить итератор в начало\n",
+		"\t2. Установить итератор в конец\n",
+		"\t3. Выполнить ++\n",
+		"\t4. Вывести значение итератора\n",
 		"\t0. Вернуться обратно\n\n"
 	};
 
-	std::string reverseIteratorMenu[] 
+	std::string vIteratorMenu[]
 	{
-		"\n\t1. Создать обратный итератор\n",
-		"\n\t2. Выполнить reverseIterator++\n",
+		"\n\t1. Установить итератор в начало\n",
+		"\t2. Установить итератор в конец\n",
+		"\t3. Выполнить ++\n",
+		"\t4. Вывести значение итератора\n",
 		"\t0. Вернуться обратно\n\n"
 	};
 
-	//graph.insertVertex(std::vector<int> { });
-	//graph.insertVertex(std::vector<int> {0});
-	//graph.insertVertex(std::vector<int> {1});
-	//graph.insertVertex(std::vector<int> {0, 1, 2});
+	std::string extraMenu[]
+	{
+		"\n\t1. Найти все простые циклы, включающие заданную вершину орграфа\n",
+		"\t0. Вернуться обратно\n\n"
+	};
 
 	while (!exit)
 	{
@@ -95,7 +115,12 @@ int main()
 			std::cin >> begin;
 			std::cout << "Введите номер второй вершины: ";
 			std::cin >> end;
-			graph.insertEdge(begin, end);
+			std::cout << "\n0. В обе стороны\n"
+				<< "1. В сторону начала ребра\n"
+				<< "2. В сторону конца ребра\n"
+				<< "Введите направление ребра: ";
+			std::cin >> dir;
+			graph.insertEdge(begin, end, (Graph<int, std::string>::Direction)dir);
 			break;
 		case 5:
 			std::cout << "Введите номер первой вершины: ";
@@ -128,16 +153,10 @@ int main()
 					std::cout << graph.countSaturation() << "\n";
 					break;
 				case 4:
-					if (graph.getGraphForm() == Graph<int, std::string>::GraphForm::mGraph)
+					if (graph.getGraphForm() == Graph<int, std::string>::GraphForm::matrixGraph)
 						std::cout << "M - граф\n";
 					else
 						std::cout << "L - граф\n";
-					break;
-				case 5:
-					if (graph.getGraphOrientation() == Graph<int, std::string>::GraphOrientation::oriented)
-						std::cout << "Ориентированный граф\n";
-					else
-						std::cout << "Не ориентированный граф\n";
 					break;
 				case 0:
 					exit = true;
@@ -174,8 +193,106 @@ int main()
 						<< "Введите форму представления: ";
 					std::cin >> form;
 					graph.clear();
-					graph = Graph<int, std::string>(value, (Graph<int, std::string>::GraphOrientation) orientation,
-						(Graph<int, std::string>::GraphForm) form);
+					graph = Graph<int, std::string>(value, (Graph<int, std::string>::GraphForm) form);
+					break;
+				case 2:
+					graph.toListGraph();
+					break;
+				case 3:
+					graph.toMatrixGraph();
+					break;
+				case 4:
+					std::cout << "Не реализовано\n";
+					break;
+				case 0:
+					exit = true;
+					break;
+				default:
+					std::cout << "Данной операции не существует\n";
+					break;
+				}
+			}
+			exit = false;
+			break;
+		case 9:
+			while (!exit)
+			{
+				for (int i = 0; i < sizeof(eIteratorMenu) / sizeof(std::string); i++)
+				{
+					std::cout << eIteratorMenu[i];
+				}
+				std::cout << "Введите номер операции: ";
+				std::cin >> sw;
+				switch (sw)
+				{
+				case 1:
+					edgeIterator = graph.eBegin();
+					break;
+				case 2:
+					edgeIterator = graph.eEnd();
+					break;
+				case 3:
+					edgeIterator++;
+					break;
+				case 4:
+					std::cout << (*edgeIterator)->getBegin()->getData() << " " 
+						<< (*edgeIterator)->getEnd()->getData() << std::endl;
+					break;
+				case 0:
+					exit = true;
+					break;
+				default:
+					std::cout << "Данной операции не существует\n";
+					break;
+				}
+			}
+			exit = false;
+			break;
+		case 10:
+			while (!exit)
+			{
+				for (int i = 0; i < sizeof(vIteratorMenu) / sizeof(std::string); i++)
+				{
+					std::cout << vIteratorMenu[i];
+				}
+				std::cout << "Введите номер операции: ";
+				std::cin >> sw;
+				switch (sw)
+				{
+				case 1:
+					vertexIterator = graph.vBegin();
+					break;
+				case 2:
+					vertexIterator = graph.vEnd();
+					break;
+				case 3:
+					vertexIterator++;
+					break;
+				case 4:
+					std::cout << (* vertexIterator)->getData() << std::endl;
+					break;
+				case 0:
+					exit = true;
+					break;
+				default:
+					std::cout << "Данной операции не существует\n";
+					break;
+				}
+			}
+			exit = false;
+			break;
+		case 11:
+			while (!exit)
+			{
+				for (int i = 0; i < sizeof(extraMenu) / sizeof(std::string); i++)
+				{
+					std::cout << extraMenu[i];
+				}
+				std::cout << "Введите номер операции: ";
+				std::cin >> sw;
+				switch (sw)
+				{
+				case 1:
 					break;
 				case 0:
 					exit = true;
