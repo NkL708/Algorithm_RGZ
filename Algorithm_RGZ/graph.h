@@ -5,8 +5,8 @@
 #include <iomanip>
 #include <algorithm>
 
-// L-граф = список рёбер
-// M-граф = матрица смежности
+// L-пїЅпїЅпїЅпїЅ = пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+// M-пїЅпїЅпїЅпїЅ = пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
 template <typename Data, typename Name>
 class Graph
@@ -120,7 +120,8 @@ public:
 	void printGraph();
 	void clear();
 	// My option task
-	void findCycles(int vNum);
+	//, std::vector<Data> *result
+	void findCycles(const Data vNum, Data curNum, Data pVNum, std::vector<int> result);
 };
 
 template<typename Data, typename Name>
@@ -461,10 +462,10 @@ inline void Graph<Data, Name>::printGraph()
 	{
 		if (!vCount) 
 		{
-			std::cout << "Матрица смежности пуста!\n";
+			std::cout << "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ!\n";
 			return;
 		}
-		std::cout << "\nМатрица смежности:\n" << std::setw(5);
+		std::cout << "\nпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:\n" << std::setw(5);
 		// Vertexes numbers
 		for (int i = 0; i < vNumList.size(); i++)
 		{
@@ -490,10 +491,10 @@ inline void Graph<Data, Name>::printGraph()
 	{
 		if (!eCount)
 		{
-			std::cout << "Список смежности пуст!\n";
+			std::cout << "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ!\n";
 			return;
 		}
-		std::cout << "\nСписок смежности:\n";
+		std::cout << "\nпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:\n";
 		// Vertexes numbers
 		std::cout << std::setw(10) << "begin ";
 		std::cout << "end ";
@@ -526,26 +527,6 @@ inline void Graph<Data, Name>::clear()
 	eList.clear();
 	vCount = 0;
 	eCount = 0;
-}
-
-// Доделать 21.05.22
-template<typename Data, typename Name>
-inline void Graph<Data, Name>::findCycles(int vNum)
-{
-	std::vector<int> results;
-	int rowI;
-	// get index in matrix
-	for (int i = 0; i < vNumList.size(); i++)
-	{
-		if (vNumList[i] == vNum)
-			rowI = i;
-	}
-	int vNumPrev;
-	for (int colI = 0; colI < vNumList.size(); colI++)
-	{
-		vNumPrev = vNumList[rowI];
-
-	}
 }
 
 template<typename Data, typename Name>
@@ -732,4 +713,49 @@ inline Graph<Data, Name>::EdgeIterator Graph<Data, Name>::eEnd()
 	it.ePtr = eList.back();
 	it.gPtr = this;
 	return it;
+}
+
+template<typename Data, typename Name>
+inline void Graph<Data, Name>::findCycles(const Data vNum, Data curNum, Data pVNum, std::vector<int> result) 
+{
+	// find index
+	int vNumI = 0;
+	for (int i = 0; i < vNumList.size(); i++)
+	{
+		if(vNumList[i] == curNum) 
+		{
+			vNumI = i;
+			break;
+		}
+	}
+	for (int i = 0; i < vNumList.size(); i++)
+	{
+		// End of Cycle
+		if (matrix[vNumI][i] && curNum == vNum && curNum != pVNum)
+		{
+			result.insert(result.end(), curNum);
+			for (int j = 0; j < result.size(); j++)
+			{
+				std::cout << result[j] << " ";
+			}
+			std::cout << std::endl;
+			return;
+		}
+		if (curNum == pVNum && vNum != curNum)
+			return;
+		// If "1" in a row
+		if (matrix[vNumI][i] && vNumList[i] != pVNum)
+		{
+			// create and copy vector
+			std::vector<int> newVector;
+			for (int j = 0; j < result.size(); j++)
+			{
+				newVector.insert(newVector.end(), result[j]);
+			}
+			newVector.insert(newVector.end(), curNum);
+			pVNum = curNum;
+			findCycles(vNum, vNumList[i], pVNum, newVector);
+		}
+		
+	}
 }
