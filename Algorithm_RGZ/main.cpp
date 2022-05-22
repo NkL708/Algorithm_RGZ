@@ -2,8 +2,8 @@
 
 int main()
 {
-	setlocale(LC_ALL, "Russian");
-	Graph<int, std::string> graph(Graph<int, std::string>::GraphForm::listGraph);
+	setlocale(LC_ALL, "Rus");
+	Graph<int, std::string> graph(Graph<int, std::string>::GraphForm::matrixGraph);
 	Graph<int, std::string>::EdgeIterator edgeIterator;
 	Graph<int, std::string>::VertexIterator vertexIterator;
 	std::vector<int> v;
@@ -14,9 +14,9 @@ int main()
 	bool exit = false;
 
 	// Debug
-	//graph.insertVertex(std::vector<int> { });
-	//graph.insertVertex(std::vector<int> {0});
-	//graph.insertVertex(std::vector<int> {1});
+	graph.insertVertex(std::vector<int> { });
+	graph.insertVertex(std::vector<int> {0});
+	graph.insertVertex(std::vector<int> {0, 1});
 	//graph.insertVertex(std::vector<int> {0, 1, 2});
 
 	//graph.insertVertex(std::vector<int> { });
@@ -26,7 +26,7 @@ int main()
 
 	std::string menu[] =
 	{
-		"\n\tМЕНЮ\n"
+		"\n\tМЕНЮ\n",
 		"\t1. Вывести граф\n",
 		"\t2. Добавить вершину\n",
 		"\t3. Удалить вершину\n",
@@ -293,6 +293,9 @@ int main()
 				switch (sw)
 				{
 				case 1:
+					std::cout << "Введите номер вершины: ";
+					std::cin >> value;
+					graph.findCycles(value, value, value, v);
 					break;
 				case 0:
 					exit = true;
