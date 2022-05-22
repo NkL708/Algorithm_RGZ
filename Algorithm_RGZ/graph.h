@@ -5,9 +5,6 @@
 #include <iomanip>
 #include <algorithm>
 
-// L-���� = ������ ����
-// M-���� = ������� ���������
-
 template <typename Data, typename Name>
 class Graph
 {
@@ -91,15 +88,15 @@ private:
 	std::vector<Data> vNumList;
 	// For L-graph
 	std::vector<Edge*> eList;
-	int vCount = 0;
-	int eCount = 0;
+	size_t vCount = 0;
+	size_t eCount = 0;
 
 public:
 	// Constructors
 	Graph();
 	Graph(GraphForm form);
-	Graph(int vertexCount, GraphForm form);
-	Graph(int vertexCount, int edgeCount, GraphForm form);
+	Graph(size_t vertexCount, GraphForm form);
+	Graph(size_t vertexCount, int edgeCount, GraphForm form);
 	Graph(const Graph& obj);
 	~Graph();
 	
@@ -113,15 +110,18 @@ public:
 	void toMatrixGraph();
 	void insertVertex(std::vector<Data> vEdges);
 	void deleteVertex(Data vertex);
-	void insertEdge(Data begin, Data end, Direction dir);
+	void insertEdge(Data begin, Data end, Direction dir, int weight);
 	void deleteEdge(Data begin, Data end);
 	Edge* getEdge(Data begin, Data end);
 	Vertex* getVertex(Data vertex);
 	void printGraph();
 	void clear();
 	// My option task
-	//, std::vector<Data> *result
 	void findCycles(const Data vNum, Data curNum, Data pVNum, std::vector<int> result);
+	void findGraphPCycles();
+private:
+	void findPCycles(const Data vNum, Data curNum, Data pVNum, std::vector<int> result);
+	bool isPeripheral(std::vector<int> result);
 };
 
 template<typename Data, typename Name>
@@ -131,17 +131,17 @@ Graph<Data, Name>::Graph()
 }
 
 template<typename Data, typename Name>
-Graph<Data, Name>::Graph(int vertexCount, GraphForm form)
+Graph<Data, Name>::Graph(size_t vertexCount, GraphForm form)
 {
 	this->form = form;
-	for (int i = 0; i < vertexCount; i++)
+	for (size_t i = 0; i < vertexCount; i++)
 	{
 		this->insertVertex(std::vector<Data> {});
 	}
 }
 
 template<typename Data, typename Name>
-Graph<Data, Name>::Graph(int vertexCount, int edgeCount, GraphForm form)
+Graph<Data, Name>::Graph(size_t vertexCount, int edgeCount, GraphForm form)
 {
 	this->vCount = vertexCount;
 	this->eCount = edgeCount;
@@ -194,9 +194,9 @@ template<typename Data, typename Name>
 inline void Graph<Data, Name>::toListGraph()
 {
 	eList.clear();
-	for (int i = 0; i < matrix.size(); i++)
+	for (size_t i = 0; i < matrix.size(); i++)
 	{
-		for (int j = 0; j < matrix[i].size(); j++)
+		for (size_t j = 0; j < matrix[i].size(); j++)
 		{
 			if (matrix[i][j] == 1)
 			{
@@ -215,22 +215,20 @@ inline void Graph<Data, Name>::toMatrixGraph()
 {
 	// create matrix
 	matrix.clear();
-	for (int i = 0; i < eCount - 1; i++)
+	for (size_t i = 0; i < vCount; i++)
 	{
-		matrix.insert(matrix.end(), std::vector<int>(eCount - 1));
+		matrix.insert(matrix.end(), std::vector<int>(vCount));
 	}
-	for (int i = 0; i < eList.size(); i++)
+	for (size_t i = 0; i < eList.size(); i++)
 	{
-		for (int j = 0; j < matrix.size(); j++)
+		for (size_t j = 0; j < matrix.size(); j++)
 		{
-			for (int k = 0; k < matrix[j].size(); k++)
+			for (size_t k = 0; k < matrix[j].size(); k++)
 			{
-				if ((eList[i]->getBegin()->getData() == vNumList[k] && eList[i]->getEnd()->getData() == vNumList[j]) ||
-					(eList[i]->getBegin()->getData() == vNumList[j] && eList[i]->getEnd()->getData() == vNumList[k]))
-				{
-					matrix[j][k] = 1;
+				if (eList[i]->getBegin()->getData() == vNumList[k] && eList[i]->getEnd()->getData() == vNumList[j])
 					matrix[k][j] = 1;
-				}
+				if (eList[i]->getBegin()->getData() == vNumList[j] && eList[i]->getEnd()->getData() == vNumList[k])
+					matrix[j][k] = 1;
 			}
 		}
 	}
@@ -244,8 +242,8 @@ inline void Graph<Data, Name>::insertVertex(std::vector<Data> vEdges)
 	int vertexNum = 0;
 	if (vNumList.size()) 
 	{
-		int maxVnum = *std::max_element(vNumList.begin(), vNumList.end());
-		for (int i = 0; i <= maxVnum + 1; i++)
+		size_t maxVnum = *std::max_element(vNumList.begin(), vNumList.end());
+		for (size_t i = 0; i <= maxVnum + 1; i++)
 		{
 			if (std::find(vNumList.begin(), vNumList.end(), i) == vNumList.end())
 			{
@@ -263,7 +261,7 @@ inline void Graph<Data, Name>::insertVertex(std::vector<Data> vEdges)
 		if (vCount > 0) 
 		{
 			// appending to rows
-			for (int i = 0; i < vNumList.size() - 1; i++)
+			for (size_t i = 0; i < vNumList.size() - 1; i++)
 			{
 				if (std::find(vEdges.begin(), vEdges.end(), vNumList[i]) != vEdges.end())
 					matrix[i].insert(matrix[i].end(), 1);
@@ -273,7 +271,7 @@ inline void Graph<Data, Name>::insertVertex(std::vector<Data> vEdges)
 			// new row
 			matrix.insert(matrix.end(), newRow);
 			int rowI = vCount;
-			for (int i = 0; i < vNumList.size(); i++)
+			for (size_t i = 0; i < vNumList.size(); i++)
 			{
 				if (std::find(vEdges.begin(), vEdges.end(), vNumList[i]) != vEdges.end())
 					matrix[rowI].insert(matrix[rowI].end(), 1);
@@ -292,16 +290,18 @@ inline void Graph<Data, Name>::insertVertex(std::vector<Data> vEdges)
 	{
 		if (vCount > 0) 
 		{
-			for (int i = 0; i < vEdges.size(); i++)
+			for (size_t i = 0; i < vEdges.size(); i++)
 			{
 				Vertex* end = nullptr;
-				for (int j = 0; j < vList.size(); j++)
+				for (size_t j = 0; j < vList.size(); j++)
 				{
 					if (vList[j]->getData() == vEdges[i])
 						end = vList[j];
 				}
-				Edge* newEdge = new Edge(newVertex, end);
-				eList.insert(eList.end(), newEdge);
+				Edge* edge1 = new Edge(newVertex, end);
+				Edge* edge2 = new Edge(end, newVertex);
+				eList.insert(eList.end(), edge1);
+				eList.insert(eList.end(), edge2);
 			}
 		}
 	}
@@ -315,7 +315,7 @@ inline void Graph<Data, Name>::deleteVertex(Data vertex)
 	if (form == GraphForm::matrixGraph)
 	{
 		// deleting row
-		for (int i = 0; i < matrix.size(); i++)
+		for (size_t i = 0; i < matrix.size(); i++)
 		{
 			if (vNumList[i] == vertex) 
 			{
@@ -324,9 +324,9 @@ inline void Graph<Data, Name>::deleteVertex(Data vertex)
 			}
 		}
 		// deleting columns from rows
-		for (int i = 0; i < matrix.size(); i++)
+		for (size_t i = 0; i < matrix.size(); i++)
 		{
-			for (int j = 0; j < matrix[i].size(); j++)
+			for (size_t j = 0; j < matrix[i].size(); j++)
 			{
 				if (vNumList[j] == vertex)
 				{
@@ -337,7 +337,7 @@ inline void Graph<Data, Name>::deleteVertex(Data vertex)
 			}
 		}
 		// delete vertex from vList
-		for (int i = 0; i < vList.size(); i++)
+		for (size_t i = 0; i < vList.size(); i++)
 		{
 			if (vList[i]->getData() == vertex)
 				vList.erase(vList.begin() + i);
@@ -345,7 +345,7 @@ inline void Graph<Data, Name>::deleteVertex(Data vertex)
 	}
 	else
 	{
-		for (int i = 0; i < eList.size(); i++)
+		for (size_t i = 0; i < eList.size(); i++)
 		{
 			if (eList[i]->getBegin()->getData() == vertex || eList[i]->getEnd()->getData() == vertex) 
 			{
@@ -360,14 +360,14 @@ inline void Graph<Data, Name>::deleteVertex(Data vertex)
 }
 
 template<typename Data, typename Name>
-inline void Graph<Data, Name>::insertEdge(Data begin, Data end, Direction dir)
+inline void Graph<Data, Name>::insertEdge(Data begin, Data end, Direction dir, int weight)
 {
 	if (form == GraphForm::matrixGraph)
 	{
 		// add edge to row and column
-		for (int i = 0; i < matrix.size(); i++)
+		for (size_t i = 0; i < matrix.size(); i++)
 		{
-			for (int j = 0; j < matrix[i].size(); j++)
+			for (size_t j = 0; j < matrix[i].size(); j++)
 			{
 				if (vNumList[i] == begin && vNumList[j] == end) 
 				{
@@ -387,17 +387,17 @@ inline void Graph<Data, Name>::insertEdge(Data begin, Data end, Direction dir)
 	else
 	{
 		Vertex* vBegin = nullptr, * vEnd = nullptr;
-		for (int i = 0; i < vList.size(); i++)
+		for (size_t i = 0; i < vList.size(); i++)
 		{
 			if (vList[i]->getData() == begin)
 				vBegin = vList[i];
 		}
-		for (int i = 0; i < vList.size(); i++)
+		for (size_t i = 0; i < vList.size(); i++)
 		{
 			if (vList[i]->getData() == end)
 				vEnd = vList[i];
 		}
-		Edge* edge = new Edge(vBegin, vEnd);
+		Edge* edge = new Edge(vBegin, vEnd, weight);
 		eList.insert(eList.end(), edge);
 	}
 	eCount++;
@@ -409,9 +409,9 @@ inline void Graph<Data, Name>::deleteEdge(Data begin, Data end)
 	if (form == GraphForm::matrixGraph)
 	{
 		// add edge to row and column
-		for (int i = 0; i < matrix.size(); i++)
+		for (size_t i = 0; i < matrix.size(); i++)
 		{
-			for (int j = 0; j < matrix[i].size(); j++)
+			for (size_t j = 0; j < matrix[i].size(); j++)
 			{
 				if ((vNumList[i] == begin && vNumList[j] == end) ||
 					(vNumList[i] == end && vNumList[j] == begin))
@@ -424,7 +424,7 @@ inline void Graph<Data, Name>::deleteEdge(Data begin, Data end)
 	else
 	{
 		Vertex* vBegin = nullptr, * vEnd = nullptr;
-		for (int i = 0; i < eList.size(); i++)
+		for (size_t i = 0; i < eList.size(); i++)
 		{
 			if ((eList[i]->getBegin()->getData() == begin && eList[i]->getEnd()->getData() == end) ||
 				(eList[i]->getBegin()->getData() == end && eList[i]->getEnd()->getData() == begin))
@@ -437,7 +437,7 @@ inline void Graph<Data, Name>::deleteEdge(Data begin, Data end)
 template<typename Data, typename Name>
 inline Graph<Data, Name>::Edge* Graph<Data, Name>::getEdge(Data begin, Data end)
 {
-	for (int i = 0; i < eList.size(); i++)
+	for (size_t i = 0; i < eList.size(); i++)
 	{
 		if ((eList[i]->getBegin()->getData() == begin && eList[i]->getEnd()->getData() == end) ||
 			(eList[i]->getBegin()->getData() == end && eList[i]->getEnd()->getData() == begin))
@@ -448,7 +448,7 @@ inline Graph<Data, Name>::Edge* Graph<Data, Name>::getEdge(Data begin, Data end)
 template<typename Data, typename Name>
 inline Graph<Data, Name>::Vertex* Graph<Data, Name>::getVertex(Data vertex)
 {
-	for (int i = 0; i < vList.size(); i++)
+	for (size_t i = 0; i < vList.size(); i++)
 	{
 		if (vList[i]->getData() == vertex)
 			return vList[i];
@@ -462,25 +462,25 @@ inline void Graph<Data, Name>::printGraph()
 	{
 		if (!vCount) 
 		{
-			std::cout << "������� ��������� �����!\n";
+			std::cout << "Matrix is empty\n";
 			return;
 		}
-		std::cout << "\n������� ���������:\n" << std::setw(5);
+		std::cout << "\nGraph martix:\n" << std::setw(5);
 		// Vertexes numbers
-		for (int i = 0; i < vNumList.size(); i++)
+		for (size_t i = 0; i < vNumList.size(); i++)
 		{
 			std::cout << vNumList[i] << " ";
 		}
 		std::cout << "\n" << std::setw(5);
-		for (int i = 0; i < matrix[0].size(); i++)
+		for (size_t i = 0; i < matrix[0].size(); i++)
 		{
 			std::cout << "--";
 		}
 		// matrix print
-		for (int i = 0; i < matrix.size(); i++)
+		for (size_t i = 0; i < matrix.size(); i++)
 		{
 			std::cout << "\n" << vNumList[i] << " | ";
-			for (int j = 0; j < matrix[i].size(); j++)
+			for (size_t j = 0; j < matrix[i].size(); j++)
 			{
 				std::cout << matrix[i][j] << " ";
 			}
@@ -491,24 +491,26 @@ inline void Graph<Data, Name>::printGraph()
 	{
 		if (!eCount)
 		{
-			std::cout << "������ ��������� ����!\n";
+			std::cout << "List of edges is empty\n";
 			return;
 		}
-		std::cout << "\n������ ���������:\n";
+		std::cout << "\nList of edges:\n";
 		// Vertexes numbers
 		std::cout << std::setw(10) << "begin ";
 		std::cout << "end ";
+		std::cout << "weight ";
 		std::cout << "\n" << std::setw(5);
-		for (int i = 0; i < eList.size(); i++)
+		for (size_t i = 0; i < eList.size(); i++)
 		{
 			std::cout << "--";
 		}
 		// matrix print
-		for (int i = 0; i < eList.size(); i++)
+		for (size_t i = 0; i < eList.size(); i++)
 		{
 			std::cout << "\n" << i << " | ";
 			std::cout << std::setw(3) << eList[i]->getBegin()->getData() 
-				<< std::setw(5) << eList[i]->getEnd()->getData();
+				<< std::setw(5) << eList[i]->getEnd()->getData()
+				<< std::setw(5) << eList[i]->getWeight();
 		}
 		std::cout << std::endl;
 	}
@@ -517,7 +519,7 @@ inline void Graph<Data, Name>::printGraph()
 template<typename Data, typename Name>
 inline void Graph<Data, Name>::clear()
 {
-	for (int i = 0; i < matrix.size(); i++)
+	for (size_t i = 0; i < matrix.size(); i++)
 	{
 		matrix[i].clear();
 	}
@@ -642,7 +644,7 @@ inline Graph<Data, Name>::Vertex* Graph<Data, Name>::VertexIterator::operator*()
 template<typename Data, typename Name>
 inline void Graph<Data, Name>::VertexIterator::operator++(int)
 {
-	for (int i = 0; i < gPtr->vList.size() - 1; i++)
+	for (size_t i = 0; i < gPtr->vList.size() - 1; i++)
 	{
 		if (gPtr->vList[i]->getData() == vPtr->getData()) 
 		{
@@ -668,7 +670,7 @@ inline Graph<Data, Name>::Edge* Graph<Data, Name>::EdgeIterator::operator*()
 template<typename Data, typename Name>
 inline void Graph<Data, Name>::EdgeIterator::operator++(int)
 {
-	for (int i = 0; i < gPtr->eList.size() - 1; i++)
+	for (size_t i = 0; i < gPtr->eList.size() - 1; i++)
 	{
 		if ((gPtr->eList[i]->getBegin()->getData() == ePtr->getBegin()->getData()) &&
 			(gPtr->eList[i]->getEnd()->getData() == ePtr->getEnd()->getData())) 
@@ -720,7 +722,7 @@ inline void Graph<Data, Name>::findCycles(const Data vNum, Data curNum, Data pVN
 {
 	// find index
 	int vNumI = 0;
-	for (int i = 0; i < vNumList.size(); i++)
+	for (size_t i = 0; i < vNumList.size(); i++)
 	{
 		if(vNumList[i] == curNum) 
 		{
@@ -728,13 +730,13 @@ inline void Graph<Data, Name>::findCycles(const Data vNum, Data curNum, Data pVN
 			break;
 		}
 	}
-	for (int i = 0; i < vNumList.size(); i++)
+	for (size_t i = 0; i < vNumList.size(); i++)
 	{
 		// End of Cycle
 		if (matrix[vNumI][i] && curNum == vNum && curNum != pVNum)
 		{
 			result.insert(result.end(), curNum);
-			for (int j = 0; j < result.size(); j++)
+			for (size_t j = 0; j < result.size(); j++)
 			{
 				std::cout << result[j] << " ";
 			}
@@ -743,19 +745,83 @@ inline void Graph<Data, Name>::findCycles(const Data vNum, Data curNum, Data pVN
 		}
 		if (curNum == pVNum && vNum != curNum)
 			return;
+		if (std::find(result.begin(), result.end(), curNum) != result.end() && curNum != vNum)
+			return;
 		// If "1" in a row
 		if (matrix[vNumI][i] && vNumList[i] != pVNum)
 		{
 			// create and copy vector
 			std::vector<int> newVector;
-			for (int j = 0; j < result.size(); j++)
+			for (size_t j = 0; j < result.size(); j++)
 			{
 				newVector.insert(newVector.end(), result[j]);
 			}
 			newVector.insert(newVector.end(), curNum);
-			pVNum = curNum;
-			findCycles(vNum, vNumList[i], pVNum, newVector);
+			findCycles(vNum, vNumList[i], curNum, newVector);
 		}
-		
+	}
+}
+
+template<typename Data, typename Name>
+inline void Graph<Data, Name>::findPCycles(const Data vNum, Data curNum, Data pVNum, std::vector<int> result)
+{
+	int eNumI = 0;
+	for (size_t i = 0; i < eList.size(); i++)
+	{
+		if (eList[i]->getBegin()->getData() == curNum)
+		{
+			eNumI = i;
+		}
+		else
+			continue;
+		if (curNum == vNum && curNum != pVNum)
+		{
+			result.insert(result.end(), curNum);
+			// Check periphery
+			if (!isPeripheral(result))
+				return;
+			for (size_t j = 0; j < result.size(); j++)
+			{
+				std::cout << result[j] << " ";
+			}
+			std::cout << std::endl;
+			return;
+		}
+		if (curNum == pVNum && vNum != curNum)
+			return;
+		if (std::find(result.begin(), result.end(), curNum) != result.end() && curNum != vNum)
+			return;
+		int nextNum = eList[eNumI]->getEnd()->getData();
+		if (nextNum != pVNum)
+		{
+			// create and copy vector
+			std::vector<int> newVector;
+			for (size_t j = 0; j < result.size(); j++)
+			{
+				newVector.insert(newVector.end(), result[j]);
+			}
+			newVector.insert(newVector.end(), curNum);
+			findPCycles(vNum, nextNum, curNum, newVector);
+		}
+	}
+}
+
+template<typename Data, typename Name>
+inline bool Graph<Data, Name>::isPeripheral(std::vector<int> result)
+{
+	for (size_t i = 0; i < eList.size(); i++)
+	{
+
+	}
+}
+
+template<typename Data, typename Name>
+inline void Graph<Data, Name>::findGraphPCycles()
+{
+	for (size_t i = 0; i < vNumList.size(); i++)
+	{
+		std::vector<int> vector;
+		findPCycles(vNumList[i], vNumList[i], vNumList[i], vector);
+		std::cout << std::endl;
 	}
 }

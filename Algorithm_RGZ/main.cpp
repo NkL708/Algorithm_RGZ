@@ -3,7 +3,7 @@
 int main()
 {
 	setlocale(LC_ALL, "Rus");
-	Graph<int, std::string> graph(Graph<int, std::string>::GraphForm::matrixGraph);
+	Graph<int, std::string> graph(Graph<int, std::string>::GraphForm::listGraph);
 	Graph<int, std::string>::EdgeIterator edgeIterator;
 	Graph<int, std::string>::VertexIterator vertexIterator;
 	std::vector<int> v;
@@ -12,17 +12,19 @@ int main()
 	int value;
 	int sw = 0;
 	bool exit = false;
-
+	
 	// Debug
-	graph.insertVertex(std::vector<int> { });
-	graph.insertVertex(std::vector<int> {0});
-	graph.insertVertex(std::vector<int> {0, 1});
+	//graph.insertVertex(std::vector<int> { });
+	//graph.insertVertex(std::vector<int> {0});
+	//graph.insertVertex(std::vector<int> {1});
 	//graph.insertVertex(std::vector<int> {0, 1, 2});
 
-	//graph.insertVertex(std::vector<int> { });
-	//graph.insertVertex(std::vector<int> { });
-	//graph.insertVertex(std::vector<int> { });
-	//graph.insertVertex(std::vector<int> { });
+	graph.insertVertex(std::vector<int> { });
+	graph.insertVertex(std::vector<int> {0});
+	graph.insertVertex(std::vector<int> {1});
+	graph.insertVertex(std::vector<int> {2});
+	graph.insertVertex(std::vector<int> {0, 1, 3});
+	graph.insertVertex(std::vector<int> {3});
 
 	std::string menu[] =
 	{
@@ -80,6 +82,7 @@ int main()
 	std::string extraMenu[]
 	{
 		"\n\t1. Найти все простые циклы, включающие заданную вершину орграфа\n",
+		"\t2. Найти периферии взвешенного орграфа на основе алгоритма Дейкстры\n",
 		"\t0. Вернуться обратно\n\n"
 	};
 
@@ -120,7 +123,9 @@ int main()
 				<< "2. В сторону конца ребра\n"
 				<< "Введите направление ребра: ";
 			std::cin >> dir;
-			graph.insertEdge(begin, end, (Graph<int, std::string>::Direction)dir);
+			std::cout << "Введите вес ребра: ";
+			std::cin >> value;
+			graph.insertEdge(begin, end, (Graph<int, std::string>::Direction)dir, value);
 			break;
 		case 5:
 			std::cout << "Введите номер первой вершины: ";
@@ -296,6 +301,10 @@ int main()
 					std::cout << "Введите номер вершины: ";
 					std::cin >> value;
 					graph.findCycles(value, value, value, v);
+					v.clear();
+					break;
+				case 2:
+					graph.findGraphPCycles();
 					break;
 				case 0:
 					exit = true;
