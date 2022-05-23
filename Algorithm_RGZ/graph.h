@@ -809,10 +809,48 @@ inline void Graph<Data, Name>::findPCycles(const Data vNum, Data curNum, Data pV
 template<typename Data, typename Name>
 inline bool Graph<Data, Name>::isPeripheral(std::vector<int> result)
 {
-	for (size_t i = 0; i < eList.size(); i++)
+	// Collect all edges that not peripheral
+	std::vector<Edge*> edges(eList);
+	for (std::vector<int>::iterator it = result.begin(); it < result.end() - 1; it++)
 	{
-
+		int begin = *it;
+		int end = *(it + 1);
+		for (size_t j = 0; j < edges.size(); j++)
+		{
+			// Remove or if don't match
+			if (edges[j]->getBegin()->getData() == begin && edges[j]->getEnd()->getData() == end ||
+				edges[j]->getBegin()->getData() == end && edges[j]->getEnd()->getData() == begin)
+			{
+				edges.erase(edges.begin() + j);
+				j--;
+			}
+		}
 	}
+	// Check each edge on connection with others
+	int pECount = 0;
+	for (size_t i = 0; i < edges.size(); i++)
+	{
+		for (size_t j = 0; j < edges.size(); j++)
+		{
+			if (i == j)
+				continue;
+			// If edges have common vertex but edges not from the same vertexes
+			if ((edges[i]->getBegin()->getData() == edges[j]->getBegin()->getData() ||
+				edges[i]->getEnd()->getData() == edges[j]->getEnd()->getData() ||
+				edges[i]->getBegin()->getData() == edges[j]->getEnd()->getData() ||
+				edges[i]->getEnd()->getData() == edges[j]->getBegin()->getData()) &&
+				!(edges[i]->getEnd()->getData() == edges[j]->getBegin()->getData() &&
+					edges[i]->getBegin()->getData() == edges[j]->getEnd()->getData()))
+			{
+				pECount++;
+				break;
+			}
+		}
+	}
+	if (pECount < edges.size())
+		return false;
+	else
+		return true;
 }
 
 template<typename Data, typename Name>
